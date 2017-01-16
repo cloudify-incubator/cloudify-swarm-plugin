@@ -1,0 +1,82 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
+  - plugins/cloudify-swarm-plugin/plugin.yaml
+  - plugins/cloudify-proxy-plugin/plugin.yaml
+
+inputs:
+  swarm_deployment:
+    description: the swarm deployment id
+    default: s
+
+node_templates:
+
+#  EXAMPLE USING SWARM MANAGER TYPE
+#
+#  master:
+#    type: cloudify.swarm.Manager
+#    properties:
+#      ip: 172.16.0.27
+#      ssh_user: ubuntu
+#      ssh_keyfile: /root/.ssh/agent_key.pem
+
+#  EXAMPLE USING DEPLOYMENT PROXY REF TO MANAGER
+#
+  manager_proxy:
+    type: cloudify.nodes.DeploymentProxy
+    properties:
+      inherit_outputs:
+        - 'swarm_info'
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            deployment_id: { get_input: swarm_deployment }
+        start:
+          inputs:
+            deployment_id: { get_input: swarm_deployment }
+        stop:
+          inputs:
+            deployment_id: { get_input: swarm_deployment }
+
+
+#  COMPOSE VERSION
+#  
+#  NOTE: AS OF THIS WRITING, SWARM MODE DOESN'T SUPPORT COMPOSE
+#    THIS MEANS CONTENTS OF COMPOSE FILE WILL LAND ON SINGLE NODE
+#
+#  service:
+#    type: cloudify.swarm.Microservice
+#    properties:
+#      name: testservice
+#      compose_file: resources/compose.yaml
+#    relationships:
+#      - type: cloudify.swarm.relationships.microservice_contained_in_manager
+#        target: master
+#
+#
+
+# EXPLICITY PROPERTY SETTING VERSION.  PROPERTY SYNTAX CONVERTED TO
+# REST API LIKE SO:  some_identifier => SomeIdentifier
+  service:
+    type: cloudify.swarm.Microservice
+    properties:
+      name: testservice
+      labels:
+        somelabkey: somelabval
+      task_template:
+        container_spec:
+          image: nginx:alpine
+      endpoint_spec:
+        ports:
+          - protocol: tcp
+            published_port: 80
+            target_port: 80
+      update_config:
+        delay: 10000000
+        parallelism: 1
+        failure_action: pause
+    relationships:
+      - type: cloudify.swarm.relationships.microservice_contained_in_manager
+        target: manager_proxy
