@@ -108,3 +108,8 @@ relationships:
       cloudify.interfaces.relationship_lifecycle:
         postconfigure:
           implementation: swarm.swarm_plugin.tasks.add_microservice
+          inputs:
+            proxy_ip_prop:
+              default: '["swarm_info"]["manager_ip"]'
+            proxy_port_prop:
+              default: '["swarm_info"]["manager_port"]'
