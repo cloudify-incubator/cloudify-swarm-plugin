@@ -1,7 +1,9 @@
 plugins:
   swarm:
     executor: central_deployment_agent
-    source: cloudify-swarm-plugin
+    source: https://github.com/cloudify-examples/cloudify-swarm-plugin/archive/1.0.zip
+    package_name: cloudify-swarm-plugin
+    package_version: '1.0'
 
 node_types:
       
